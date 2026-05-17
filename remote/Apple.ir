@@ -1,0 +1,44 @@
+Filetype: IR signals file
+Version: 1
+# 
+name: Ok
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 5D 47 00 00
+# 
+name: Ned
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 0D 47 00 00
+# 
+name: Op
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 0B 47 00 00
+# 
+name: Venstre
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 08 47 00 00
+# 
+name: Hojre
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 07 47 00 00
+# 
+name: Pause
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 5E 47 00 00
+# 
+name: Menu
+type: parsed
+protocol: NECext
+address: EE 87 00 00
+command: 02 47 00 00
