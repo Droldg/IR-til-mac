@@ -5,7 +5,7 @@ IR_PIN = 15
 LED_PIN = "LED"
 LED_BLINK_MS = 80
 
-SHUTDOWN_COMMAND = "sudo /usr/bin/shutdown now"
+SHUTDOWN_COMMAND = "SHUTDOWN"
 ACTION_COOLDOWN_MS = 1500
 
 ir = Pin(IR_PIN, Pin.IN)
