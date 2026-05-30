@@ -5,11 +5,13 @@ import sys
 import time
 
 import serial
+from serial import SerialException
 from serial.tools import list_ports
 
 
 BAUD_RATE = 115200
 TRIGGER = "SHUTDOWN"
+RETRY_SECONDS = 2
 OLD_PICO_COMMANDS = {
     "sudo shutdown now",
     "sudo /usr/bin/shutdown now",
@@ -33,6 +35,16 @@ def find_port():
         return pico_matches[0]
 
     return None
+
+
+def available_ports_text():
+    ports = list(list_ports.comports())
+    if not ports:
+        return "none"
+
+    return ", ".join(
+        "{} ({})".format(item.device, item.description) for item in ports
+    )
 
 
 def shutdown_command():
@@ -88,6 +100,45 @@ def listen(port, dry_run):
                 )
 
 
+def wait_for_port(requested_port):
+    while True:
+        port = requested_port or find_port()
+        if port:
+            return port
+
+        print(
+            "Waiting for Pico serial port. Available ports: {}".format(
+                available_ports_text()
+            ),
+            flush=True,
+        )
+        time.sleep(RETRY_SECONDS)
+
+
+def run_forever(requested_port, dry_run, wait):
+    while True:
+        port = wait_for_port(requested_port) if wait else requested_port or find_port()
+
+        if not port:
+            print("Could not auto-detect Pico serial port.", file=sys.stderr)
+            print("Available ports: {}".format(available_ports_text()), file=sys.stderr)
+            print("Run again with --port PORT, or omit --no-wait.", file=sys.stderr)
+            return 1
+
+        try:
+            listen(port, dry_run)
+        except KeyboardInterrupt:
+            print("Stopped.", flush=True)
+            return 0
+        except (OSError, SerialException) as exc:
+            if not wait:
+                raise
+
+            print("Serial connection lost: {}".format(exc), flush=True)
+            print("Reconnecting in {} seconds...".format(RETRY_SECONDS), flush=True)
+            time.sleep(RETRY_SECONDS)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Listen for a Raspberry Pi Pico IR shutdown trigger."
@@ -101,24 +152,14 @@ def main():
         action="store_true",
         help="Print the shutdown command without running it.",
     )
+    parser.add_argument(
+        "--no-wait",
+        action="store_true",
+        help="Exit if the Pico is not connected instead of waiting/reconnecting.",
+    )
     args = parser.parse_args()
 
-    port = args.port or find_port()
-    if not port:
-        print("Could not auto-detect Pico serial port.", file=sys.stderr)
-        print("Available ports:", file=sys.stderr)
-        for item in list_ports.comports():
-            print("  {} - {}".format(item.device, item.description), file=sys.stderr)
-        print("Run again with --port PORT.", file=sys.stderr)
-        return 1
-
-    try:
-        listen(port, args.dry_run)
-    except KeyboardInterrupt:
-        print("Stopped.", flush=True)
-        return 0
-
-    return 0
+    return run_forever(args.port, args.dry_run, not args.no_wait)
 
 
 if __name__ == "__main__":
