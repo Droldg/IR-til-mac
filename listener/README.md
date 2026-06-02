@@ -53,6 +53,7 @@ powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\path\to\lis
 ```
 
 The PowerShell script writes output to `listener.log` in the listener folder.
+The Windows startup script listens on `COM3`.
 
 Windows uninstall:
 
